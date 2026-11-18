@@ -1,0 +1,1009 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<style>
+  :root{
+    --navy:#1f3864; --navy-2:#2c4a80; --ink:#1b2437; --muted:#5b6b8c;
+    --line:#e3eaf6; --bg:#eef2f9; --card:#ffffff; --accent:#2f6fed;
+    --danger:#c0392b; --danger-bg:#fdecea; --warn:#b26a00; --warn-bg:#fff4e0;
+    --ok:#1e7d45; --ok-bg:#e6f4ea; --gold:#8a6d1f;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Hiragino Kaku Gothic ProN","Noto Sans JP","Yu Gothic",Meiryo,sans-serif;
+    font-size:15px;line-height:1.6;-webkit-text-size-adjust:100%}
+  header.top{background:linear-gradient(135deg,var(--navy),var(--navy-2));color:#fff;padding:18px 20px 16px}
+  header.top .brand{font-size:11px;letter-spacing:.18em;opacity:.8}
+  header.top h1{margin:2px 0 0;font-size:19px;font-weight:700}
+  header.top .sub{font-size:12px;opacity:.85;margin-top:4px}
+  .tabs{display:flex;gap:8px;margin-top:14px}
+  .tabs a{flex:1;text-align:center;padding:9px 10px;border-radius:10px;text-decoration:none;font-size:13px;font-weight:700;
+    background:rgba(255,255,255,.14);color:#fff;border:1px solid rgba(255,255,255,.28)}
+  .tabs a.on{background:#fff;color:var(--navy)}
+  main{max-width:760px;margin:0 auto;padding:18px 14px 120px}
+  .card{background:var(--card);border-radius:16px;padding:18px 18px 6px;box-shadow:0 6px 20px rgba(20,40,80,.07);margin-bottom:16px}
+  .sec{display:flex;align-items:center;gap:10px;margin:6px 0 14px;padding-bottom:10px;border-bottom:1px solid var(--line)}
+  .sec .no{width:26px;height:26px;border-radius:50%;background:var(--navy);color:#fff;display:flex;align-items:center;
+    justify-content:center;font-size:13px;font-weight:700;flex:none}
+  .sec h2{margin:0;font-size:15px;color:var(--navy)}
+  .field{margin:0 0 16px}
+  .field label{display:block;font-weight:700;font-size:13.5px;margin-bottom:6px}
+  .req{color:var(--danger);font-size:11px;font-weight:700;margin-left:6px;vertical-align:2px}
+  .opt{color:var(--muted);font-size:11px;font-weight:400;margin-left:6px}
+  .hint{font-size:12px;color:var(--muted);margin:4px 0 0}
+  input[type=text],input[type=tel],input[type=date],input[type=time],textarea,select{
+    width:100%;padding:12px 12px;border:1.5px solid var(--line);border-radius:10px;font-size:16px;background:#fff;color:var(--ink);
+    font-family:inherit}
+  input:focus,textarea:focus,select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(47,111,237,.15)}
+  textarea{min-height:88px;resize:vertical}
+  .choices{display:flex;flex-direction:column;gap:8px}
+  .choice{display:flex;gap:10px;align-items:flex-start;padding:11px 12px;border:1.5px solid var(--line);border-radius:10px;cursor:pointer;background:#fff}
+  .choice:hover{border-color:#b9caea}
+  .choice input{margin:3px 0 0;accent-color:var(--navy);width:18px;height:18px;flex:none}
+  .choice span{font-size:14px}
+  .choice small{display:block;color:var(--muted);font-weight:400}
+  .choice.warn{border-color:#f0c9a0;background:var(--warn-bg)}
+  .choice.warn.on{border-color:var(--danger);background:var(--danger-bg)}
+  .choice.on{border-color:var(--navy);background:#f2f6ff}
+  .choices.grid{display:grid;grid-template-columns:1fr 1fr}
+  .row2{display:flex;gap:10px}
+  .row2>*{flex:1}
+  .row3{display:flex;gap:10px}
+  .row3>*{flex:1}
+  .pill{display:inline-flex;align-items:center;gap:6px;padding:5px 12px;border-radius:999px;background:#eef5ff;color:var(--navy);
+    font-size:12.5px;font-weight:700;border:1px solid #cddcf7}
+  .pill.hot{background:var(--danger-bg);color:var(--danger);border-color:#f3c1bb}
+  .pill.blue{background:#e8eefb;color:#1f3864}
+  .drop{border:2px dashed #b9caea;border-radius:12px;padding:18px;text-align:center;color:var(--muted);background:#f8fbff;cursor:pointer}
+  .drop.hot{border-color:var(--accent);background:#eef5ff;color:var(--navy)}
+  .drop b{color:var(--navy)}
+  .file{display:flex;align-items:center;gap:8px;font-size:13px;background:#f2f6ff;border:1px solid var(--line);border-radius:9px;padding:7px 10px;margin-top:8px}
+  .file .x{margin-left:auto;color:var(--danger);cursor:pointer;font-weight:700}
+  .banner{display:none;border-radius:12px;padding:12px 14px;font-size:13px;margin:0 0 16px}
+  .banner.show{display:block}
+  .banner.dup{background:var(--danger-bg);border:1px solid #f3c1bb;color:var(--danger)}
+  .banner.err{background:#fdecea;border:1px solid #f3c1bb;color:var(--danger)}
+  .banner.info{background:#eef5ff;border:1px solid #cddcf7;color:var(--navy)}
+  .banner.alert{background:#fdecea;border:2px solid var(--danger);color:var(--danger);font-weight:700;font-size:14px}
+  .footbar{position:fixed;left:0;right:0;bottom:0;background:rgba(255,255,255,.96);border-top:1px solid var(--line);
+    padding:10px 14px calc(10px + env(safe-area-inset-bottom));box-shadow:0 -6px 18px rgba(20,40,80,.07)}
+  .footbar .inner{max-width:760px;margin:0 auto;display:flex;gap:10px;align-items:center}
+  .btn{border:none;border-radius:12px;padding:13px 18px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;
+    background:#fff;color:var(--navy);border:1.5px solid #cfd8ea;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;gap:6px}
+  .btn.primary{background:var(--navy);border-color:var(--navy);color:#fff}
+  .btn.big{flex:1;width:100%}
+  .btn:disabled{opacity:.55;cursor:not-allowed}
+  .btn.small{padding:8px 12px;font-size:12.5px;border-radius:9px}
+  .btn.ok{background:var(--ok);border-color:var(--ok);color:#fff}
+  .btn.paid{background:var(--navy);border-color:var(--navy);color:#fff}
+  .btn.gold{background:#fff;border-color:#e0cfa0;color:var(--gold)}
+  .btn.ghost{background:#fff;color:var(--muted)}
+  .board-item{background:#fff;border-radius:14px;padding:14px;margin-bottom:12px;box-shadow:0 4px 14px rgba(20,40,80,.06);
+    border-left:5px solid var(--line)}
+  .board-item.ceo{border-left-color:var(--danger)}
+  .board-item.wait{border-left-color:#e8a33d}
+  .board-item.ready{border-left-color:var(--ok)}
+  .board-item h3{margin:0 0 2px;font-size:15px}
+  .board-item .meta{font-size:12px;color:var(--muted)}
+  .chips{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0 10px}
+  .chip{font-size:11px;padding:3px 9px;border-radius:999px;background:#eef2f9;color:var(--muted);font-weight:700}
+  .chip.amount{background:#1f3864;color:#fff}
+  .chip.ceo{background:var(--danger-bg);color:var(--danger)}
+  .chip.ok{background:var(--ok-bg);color:var(--ok)}
+  .chip.warn{background:var(--warn-bg);color:var(--warn)}
+  .chip.easy{background:#fff6d6;color:#8a6d1f}
+  .detail{font-size:12.5px;color:#33415c;margin:0 0 10px;white-space:pre-wrap}
+  .acts{display:flex;flex-wrap:wrap;gap:8px}
+  .empty{text-align:center;color:var(--muted);padding:40px 10px}
+  .success{text-align:center;padding:26px 10px 10px}
+  .success .big-ok{font-size:52px;line-height:1}
+  .success h2{color:var(--ok);margin:8px 0 6px}
+  .id-box{display:inline-block;font-family:ui-monospace,Menlo,monospace;font-size:18px;font-weight:700;color:var(--navy);
+    background:#eef5ff;border:1px dashed #b9caea;border-radius:10px;padding:8px 14px;margin:8px 0}
+  .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:86px;background:var(--ink);color:#fff;font-size:13px;
+    padding:10px 16px;border-radius:999px;opacity:0;pointer-events:none;transition:.25s;z-index:50}
+  .toast.show{opacity:.95}
+  .modal{display:none;position:fixed;inset:0;background:rgba(15,27,51,.55);z-index:60;align-items:flex-end;justify-content:center;padding:0}
+  .modal.show{display:flex}
+  .modal-card{background:#fff;border-radius:18px 18px 0 0;padding:20px 18px calc(20px + env(safe-area-inset-bottom));width:100%;max-width:760px;max-height:88vh;overflow:auto}
+  .modal-card h2{margin:0 0 10px;font-size:17px;color:var(--navy)}
+  .preview{white-space:pre-wrap;font-family:ui-monospace,Menlo,monospace;font-size:12px;background:#0f1b33;color:#e8eefb;
+    border-radius:12px;padding:14px;margin:10px 0 16px;line-height:1.5;max-height:420px;overflow:auto}
+  .warnbox{display:none;background:var(--danger-bg);border:2px solid var(--danger);border-radius:12px;padding:12px 14px;
+    color:var(--danger);font-weight:700;font-size:13.5px;margin:-8px 0 16px}
+  .warnbox.show{display:block}
+  @media (max-width:420px){ .row2,.row3{flex-direction:column} .choices.grid{grid-template-columns:1fr} }
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="brand">MARTIAL ARTS ／ 振込依頼システム</div>
+  <h1 id="pageTitle">振込依頼フォーム</h1>
+  <div class="sub" id="pageSub">入力して送信すると、台帳とSlackに自動で共有されます</div>
+  <div class="tabs">
+    <a id="tabForm" href="?p=form">📝 振込依頼</a>
+    <a id="tabBoard" href="?p=board">📋 承認・振込ボード</a>
+  </div>
+</header>
+
+<main>
+  <div id="bootError" class="banner err"></div>
+  <!-- =================== フォーム =================== -->
+  <div id="viewForm" style="display:none">
+    <div class="banner info" style="display:block">
+      承認の順番：<b>① 投稿内容と請求書の確認（小久保）→ ② 振込の実行・振込受付書の投稿（長谷川CEO）</b>。
+      確認で <b>:確認:</b> スタンプ、振込後に <b>💰</b> スタンプが付きます。手付金・残代金・キャッシュバックは長谷川代表の承認OKまで振込完了にできません。
+    </div>
+    <div class="banner dup" id="dupBanner"></div>
+    <div class="banner err" id="errBanner"></div>
+
+    <div class="card">
+      <div class="sec"><div class="no">1</div><h2>申請者と支払内容</h2></div>
+
+      <div class="field">
+        <label>担当者名（半角ｶﾀｶﾅ）<span class="req">必須</span></label>
+        <input type="text" id="staff" placeholder="ｺｸﾎﾞ" autocomplete="off">
+        <p class="hint">例：ｺｸﾎﾞ ／ ﾊｾｶﾞﾜ ／ ｳｴﾀﾞｱﾕﾑ　※全角で入力しても自動で半角になります</p>
+      </div>
+
+      <div class="field">
+        <label>支払内容<span class="req">必須</span></label>
+        <div class="choices grid" id="typeChoices">
+          <label class="choice"><input type="radio" name="type" value="手付金"><span>手付金<small>⚠️ 代表承認が必要</small></span></label>
+          <label class="choice warn"><input type="radio" name="type" value="残代金"><span>残代金<small>⚠️ 代表承認が必要</small></span></label>
+          <label class="choice warn"><input type="radio" name="type" value="キャッシュバック"><span>キャッシュバック<small>⚠️ 代表承認が必要</small></span></label>
+          <label class="choice"><input type="radio" name="type" value="税金"><span>税金<small>納付書・税務</small></span></label>
+          <label class="choice"><input type="radio" name="type" value="ペイジー支払"><span>ペイジー支払<small>収納機関番号で納付</small></span></label>
+          <label class="choice on"><input type="radio" name="type" value="その他" checked><span>その他<small>経費・管理費など</small></span></label>
+        </div>
+        <p class="hint">「手付金」「残代金」「キャッシュバック」は長谷川代表の承認OKまで振込できません（赤い行になります。承認できるのは長谷川CEOと小久保の2人です）。</p>
+      </div>
+
+      <div class="field">
+        <label>金額区分（自動判定）</label>
+        <span class="pill" id="bandPill">金額を入れると自動で決まります</span>
+        <p class="hint">50万円以下は「50万円以下」、50万円を超えると「高額」として台帳・Slackに表示されます。</p>
+      </div>
+
+      <div class="field">
+        <label>緊急度<span class="req">必須</span></label>
+        <div class="choices" id="urgChoices">
+          <label class="choice on"><input type="radio" name="urgency" value="通常" checked><span>通常</span></label>
+          <label class="choice"><input type="radio" name="urgency" value="緊急！（3営業日以内）"><span>緊急！（3営業日以内）</span></label>
+          <label class="choice warn"><input type="radio" name="urgency" value="至急！！（前日・当日）"><span>至急！！（前日・当日）<small>前日・当日に振込が必要なもの</small></span></label>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="sec"><div class="no">2</div><h2>金額と期日</h2></div>
+
+      <div class="field">
+        <label>振込ご依頼人名（名義）<span class="req">必須</span></label>
+        <div class="choices" id="payerChoices">
+          <label class="choice on"><input type="radio" name="payer" value="ｶﾌﾞｼｷｶﾞｲｼｬﾏｰｼｬﾙｱｰﾂ" checked><span>ｶﾌﾞｼｷｶﾞｲｼｬﾏｰｼｬﾙｱｰﾂ<small>マーシャルアーツ名義（通常はこちら）</small></span></label>
+          <label class="choice warn"><input type="radio" name="payer" value="ﾄｳﾖｳｹﾝｾﾂﾎｰﾑｶﾌﾞｼｷｶﾞｲｼｬ"><span>ﾄｳﾖｳｹﾝｾﾂﾎｰﾑｶﾌﾞｼｷｶﾞｲｼｬ<small>東洋建設ホーム名義</small></span></label>
+          <label class="choice"><input type="radio" name="payer" value="その他（備考参照）"><span>その他（備考参照）<small>備考欄に名義を記載</small></span></label>
+        </div>
+        <div class="warnbox" id="toyoWarn">🚨⚠️ トウヨウケンセツホーム ⚠️🚨<br>※マーシャルアーツ名義ではありません！ この内容でSlackに大きく警告が出ます。</div>
+      </div>
+
+      <div class="field">
+        <label>取引先名（半角ｶﾀｶﾅ）<span class="req">必須</span></label>
+        <input type="text" id="vendor" placeholder="ｷｮｳｴｲﾃｯｸｽｶﾌﾞｼｷｶﾞｲｼｬ" autocomplete="off">
+        <p class="hint">請求書の宛名どおりに。法人格も含める（ｶﾌﾞｼｷｶﾞｲｼｬ・ﾕｳｹﾞﾝｶﾞｲｼｬ など）</p>
+      </div>
+
+      <div class="field">
+        <label>請求金額（円）<span class="req">必須</span></label>
+        <input type="text" id="amount" inputmode="numeric" placeholder="11110" autocomplete="off">
+        <p class="hint">数字のみ（カンマ・「円」不要）。<span id="amountYen">-</span></p>
+      </div>
+
+      <div class="row2">
+        <div class="field">
+          <label>支払期日<span class="req">必須</span></label>
+          <input type="date" id="due">
+          <p class="hint" id="dueJa">曜日は自動で付きます</p>
+        </div>
+        <div class="field">
+          <label>支払期日の時刻<span class="opt">任意</span></label>
+          <input type="time" id="dueTime">
+          <p class="hint">例 15:00（未入力なら日付のみ）</p>
+        </div>
+      </div>
+
+      <div class="row2">
+        <div class="field">
+          <label>処理希望日<span class="req">必須</span></label>
+          <input type="date" id="want">
+          <p class="hint" id="wantJa">期日より前の日を指定</p>
+        </div>
+        <div class="field">
+          <label>処理希望日の時刻<span class="opt">任意</span></label>
+          <input type="time" id="wantTime">
+          <p class="hint">例 10:00</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="sec"><div class="no">3</div><h2>振込先</h2></div>
+
+      <div class="field" style="margin-bottom:10px">
+        <span class="pill blue" id="methodPill">振込方法：銀行振込</span>
+        <p class="hint" id="methodHint">支払内容で「ペイジー支払」を選ぶと、収納機関番号・納付番号・確認番号の入力欄に切り替わります。</p>
+      </div>
+
+      <!-- 銀行振込 -->
+      <div id="bankPanel">
+        <div class="row2">
+          <div class="field">
+            <label>銀行名<span class="req">必須</span></label>
+            <input type="text" id="bank" placeholder="三井住友銀行" autocomplete="off">
+          </div>
+          <div class="field">
+            <label>支店名<span class="req">必須</span></label>
+            <input type="text" id="branch" placeholder="首都圏" autocomplete="off">
+          </div>
+        </div>
+
+        <div class="field">
+          <label>口座種別<span class="req">必須</span></label>
+          <div class="choices" id="accTypeChoices" style="flex-direction:row;flex-wrap:wrap">
+            <label class="choice on"><input type="radio" name="accType" value="普通" checked><span>普通</span></label>
+            <label class="choice"><input type="radio" name="accType" value="当座"><span>当座</span></label>
+            <label class="choice"><input type="radio" name="accType" value="貯蓄"><span>貯蓄</span></label>
+          </div>
+        </div>
+
+        <div class="row2">
+          <div class="field">
+            <label>口座番号<span class="req">必須</span></label>
+            <input type="text" id="accNo" inputmode="numeric" placeholder="9632339" autocomplete="off">
+            <p class="hint">数字のみ・ハイフンなし</p>
+          </div>
+          <div class="field">
+            <label>口座名義（半角ｶﾀｶﾅ）<span class="req">必須</span></label>
+            <input type="text" id="accName" placeholder="ｽﾄﾗｲﾌﾟｼﾞｬﾊﾟﾝ" autocomplete="off">
+          </div>
+        </div>
+      </div>
+
+      <!-- ペイジー -->
+      <div id="easyPanel" style="display:none">
+        <div class="banner info" style="display:block;margin-bottom:14px">
+          <b>ペイジー（Pay-easy）納付</b>：納付書に印字されている番号を入力してください。銀行の口座番号は使いません。
+        </div>
+        <div class="row2">
+          <div class="field">
+            <label>収納機関番号（5桁）<span class="req">必須</span></label>
+            <input type="text" id="kanriNo" inputmode="numeric" maxlength="5" placeholder="12345" autocomplete="off">
+          </div>
+          <div class="field">
+            <label>確認番号（6桁）<span class="req">必須</span></label>
+            <input type="text" id="kakuninNo" inputmode="numeric" maxlength="6" placeholder="123456" autocomplete="off">
+          </div>
+        </div>
+        <div class="field">
+          <label>納付番号（4-4-4-4・16桁）<span class="req">必須</span></label>
+          <input type="text" id="noufuNo" inputmode="numeric" placeholder="1234-5678-9012-3456" autocomplete="off">
+          <p class="hint">ハイフンは自動で入ります（<span id="noufuCount">0</span>/16桁）</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="sec"><div class="no">4</div><h2>案件詳細・報告先・請求書</h2></div>
+
+      <div class="field">
+        <label>案件名・内訳<span class="req">必須</span></label>
+        <textarea id="project" placeholder="協栄テックス株式会社 119号室 管理費11月分"></textarea>
+        <p class="hint">物件名・号室・期間など、何の支払いか分かるように</p>
+      </div>
+
+      <div class="field">
+        <label>同行者（半角ｶﾀｶﾅ）<span class="opt">任意</span></label>
+        <input type="text" id="companion" placeholder="ﾀｹﾀﾞ" autocomplete="off">
+        <p class="hint">未入力なら「なし」で投稿されます（全角は自動で半角に）</p>
+      </div>
+
+      <div class="field">
+        <label>振込依頼投稿の報告先<span class="req">必須</span></label>
+        <div class="choices" id="reportChoices" style="flex-direction:row;flex-wrap:wrap">
+          <label class="choice on"><input type="checkbox" name="report" value="CEO" checked><span>CEO（長谷川）</span></label>
+          <label class="choice"><input type="checkbox" name="report" value="小久保"><span>小久保</span></label>
+        </div>
+        <p class="hint">報告先はCEO（長谷川）と小久保の2人だけです。複数チェックできます（例：CEO・小久保）。Slack投稿に表示されます。</p>
+      </div>
+
+      <div class="field">
+        <label>請求書PDF・画像<span class="opt">任意</span></label>
+        <div class="drop" id="drop">
+          <div><b>タップして選択</b> または ここにドラッグ</div>
+          <div class="hint" style="margin-top:4px">PDF・画像（JPG/PNG）／1ファイル <span id="maxMb">20</span>MBまで</div>
+          <input type="file" id="file" accept="application/pdf,image/*" style="display:none">
+        </div>
+        <div id="fileList"></div>
+        <p class="hint">選んだ請求書はGoogle Driveの「振込依頼_請求書」に保存され、台帳とSlackからワンクリックで開けます。</p>
+      </div>
+
+      <div class="field">
+        <label>備考<span class="opt">任意</span></label>
+        <input type="text" id="pdfNote" placeholder="振込依頼人名「その他」の場合の名義など" autocomplete="off">
+      </div>
+
+      <div class="field">
+        <button class="btn small ghost" id="previewBtn" type="button">👀 Slackに投稿される文面を確認する</button>
+        <pre class="preview" id="previewBox" style="display:none"></pre>
+      </div>
+    </div>
+  </div>
+
+  <!-- =================== ボード =================== -->
+  <div id="viewBoard" style="display:none">
+    <div class="banner info" style="display:block" id="boardInfo"></div>
+    <div id="boardList"></div>
+  </div>
+
+  <!-- =================== 成功 =================== -->
+  <div id="viewDone" style="display:none">
+    <div class="card success">
+      <div class="big-ok">✅</div>
+      <h2>受け付けました</h2>
+      <div class="id-box" id="doneId">-</div>
+      <p class="hint" id="doneMsg"></p>
+      <div class="acts" style="justify-content:center;margin-top:14px">
+        <a class="btn" id="donePdf" target="_blank" style="display:none">📄 請求書を開く</a>
+        <button class="btn" onclick="resetForm()">📝 続けて依頼する</button>
+        <a class="btn primary" id="doneBoard" href="?p=board">📋 承認ボード</a>
+      </div>
+    </div>
+  </div>
+</main>
+
+<div class="footbar" id="footbar" style="display:none">
+  <div class="inner">
+    <button class="btn primary big" id="submitBtn">この内容で送信する</button>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<!-- =================== 振込完了（振込受付書つき） =================== -->
+<div class="modal" id="paidModal">
+  <div class="modal-card">
+    <h2>💸 振込完了にする</h2>
+    <p class="hint" id="paidTargetLabel" style="margin-bottom:12px"></p>
+    <div class="field" style="margin-bottom:12px">
+      <label>振込受付書（任意）</label>
+      <div class="drop" id="paidDrop">
+        <div><b>タップして選択</b> または ここにドラッグ</div>
+        <div class="hint" style="margin-top:4px">PDF・画像（JPG/PNG）／1ファイル <span id="paidMaxMb">20</span>MBまで</div>
+        <input type="file" id="paidFile" accept="application/pdf,image/*" style="display:none">
+      </div>
+      <div id="paidFileList"></div>
+      <p class="hint">選んだファイルはGoogle Driveの「振込依頼_請求書」に保存され、Slackのスレッドにリンクが返ります。未選択のままでも完了できます。</p>
+    </div>
+    <div class="banner info" style="display:block;margin-bottom:14px">振込を実行したあとに押してください。依頼投稿に <b>💰 スタンプ</b> が付きます。</div>
+    <div class="acts">
+      <button class="btn ghost" id="paidCancel" type="button">キャンセル</button>
+      <button class="btn primary big" id="paidRun" type="button">振込完了にする</button>
+    </div>
+  </div>
+</div>
+
+<!-- =================== Slackのボタンから開いたときの確認 =================== -->
+<div class="modal" id="actModal">
+  <div class="modal-card">
+    <h2 id="actTitle">この操作を実行しますか？</h2>
+    <p class="detail" id="actBody" style="font-size:13px;line-height:1.75"></p>
+    <div class="banner info" style="display:block;margin:4px 0 14px">実行すると台帳とSlackが更新されます。内容を確認してから押してください。</div>
+    <div class="acts">
+      <button class="btn ghost" id="actCancel" type="button">キャンセル</button>
+      <button class="btn primary big" id="actRun" type="button">実行する</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* =====================================================================
+ *  Martial Arts ／ 振込依頼システム（GitHub Pages 版フロントエンド）
+ *  ここには秘密情報を一切置かない。通信先は公開済みGAS WebアプリとそのAPIだけ。
+ * ===================================================================== */
+var GAS_URL = 'https://script.google.com/macros/s/AKfycbw7eCY4acM_AMhh52Z-tgZJZp2gHkqR4PiNk5X3en_szWOgrOKR1VfmAY0c8p75RX5m/exec';
+
+/* ======== 起動データ（?api=boot で受け取る） ======== */
+var BOOT = { view: 'form', board: [], config: { band: 500000, maxMb: 20 } };
+var BOOT_OK = false;
+var VIEW = 'form';
+
+/* ======== 正規化（サーバーと同じ規則のクライアント版） ======== */
+var KANA_DAKU = {'ガ':'ｶﾞ','ギ':'ｷﾞ','グ':'ｸﾞ','ゲ':'ｹﾞ','ゴ':'ｺﾞ','ザ':'ｻﾞ','ジ':'ｼﾞ','ズ':'ｽﾞ','ゼ':'ｾﾞ','ゾ':'ｿﾞ',
+ 'ダ':'ﾀﾞ','ヂ':'ﾁﾞ','ヅ':'ﾂﾞ','デ':'ﾃﾞ','ド':'ﾄﾞ','バ':'ﾊﾞ','ビ':'ﾋﾞ','ブ':'ﾌﾞ','ベ':'ﾍﾞ','ボ':'ﾎﾞ','パ':'ﾊﾟ','ピ':'ﾋﾟ','プ':'ﾌﾟ','ペ':'ﾍﾟ','ポ':'ﾎﾟ',
+ 'ヴ':'ｳﾞ','ヷ':'ﾜﾞ','ヸ':'ｲﾞ','ヹ':'ｴﾞ','ヺ':'ｦﾞ'};
+var KANA_SINGLE = {'ア':'ｱ','イ':'ｲ','ウ':'ｳ','エ':'ｴ','オ':'ｵ','カ':'ｶ','キ':'ｷ','ク':'ｸ','ケ':'ｹ','コ':'ｺ','サ':'ｻ','シ':'ｼ','ス':'ｽ','セ':'ｾ','ソ':'ｿ',
+ 'タ':'ﾀ','チ':'ﾁ','ツ':'ﾂ','テ':'ﾃ','ト':'ﾄ','ナ':'ﾅ','ニ':'ﾆ','ヌ':'ﾇ','ネ':'ﾈ','ノ':'ﾉ','ハ':'ﾊ','ヒ':'ﾋ','フ':'ﾌ','ヘ':'ﾍ','ホ':'ﾎ','マ':'ﾏ','ミ':'ﾐ','ム':'ﾑ',
+ 'メ':'ﾒ','モ':'ﾓ','ヤ':'ﾔ','ユ':'ﾕ','ヨ':'ﾖ','ラ':'ﾗ','リ':'ﾘ','ル':'ﾙ','レ':'ﾚ','ロ':'ﾛ','ワ':'ﾜ','ヲ':'ｦ','ン':'ﾝ','ァ':'ｧ','ィ':'ｨ','ゥ':'ｩ','ェ':'ｪ','ォ':'ｫ',
+ 'ャ':'ｬ','ュ':'ｭ','ョ':'ｮ','ッ':'ｯ','ヮ':'ﾜ','ヵ':'ｶ','ヶ':'ｹ','ー':'ｰ','・':'･'};
+function toHalfAscii(s){
+  if(s==null) return '';
+  var t=String(s); try{t=t.normalize('NFKC')}catch(e){}
+  var o='';
+  for(var i=0;i<t.length;i++){var c=t.charCodeAt(i);
+    if(c>=0xFF01&&c<=0xFF5E) o+=String.fromCharCode(c-0xFEE0);
+    else if(c===0x3000) o+=' '; else o+=t.charAt(i);}
+  return o;
+}
+function kanaToHalf(s){
+  var t=toHalfAscii(s),o='';
+  for(var i=0;i<t.length;i++){var ch=t.charAt(i),c=ch.charCodeAt(0);
+    if(c>=0x3041&&c<=0x3096) ch=String.fromCharCode(c+0x60);
+    if(KANA_DAKU[ch]) o+=KANA_DAKU[ch]; else if(KANA_SINGLE[ch]) o+=KANA_SINGLE[ch]; else o+=ch;}
+  return o;
+}
+function normKana(s){ return kanaToHalf(s).replace(/[\s\u3000]+/g,' ').replace(/^ | $/g,''); }
+function normDigits(s){ return toHalfAscii(s).replace(/[^0-9]/g,''); }
+function yen(n){ var v=Number(n); if(!isFinite(v)||v<=0) return '-'; return v.toLocaleString('ja-JP')+'円'; }
+var BAND = 500000;
+var WEEK = ['日','月','火','水','木','金','土'];
+function dateJa(v){
+  if(!v) return '';
+  var p=v.split('-'); if(p.length!==3) return v;
+  var d=new Date(Number(p[0]), Number(p[1])-1, Number(p[2]));
+  return p[0]+'/'+p[1]+'/'+p[2]+'（'+WEEK[d.getDay()]+'）';
+}
+function timeText(v){ return /^\d{2}:\d{2}$/.test(v||'') ? v : ''; }
+function dueLine(d,t){ var s=dateJa(d); if(!s) return ''; var tt=timeText(t); return tt? s+' '+tt : s; }
+function bandOf(n){ var v=Number(n); if(!isFinite(v)||v<=0) return ''; return v<=BAND ? '50万円以下' : '高額'; }
+function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];}); }
+
+/* ======== 通信（GAS WebアプリをAPIとして使う） ======== */
+function readJson(r){
+  if(!r.ok) throw new Error('サーバー応答 '+r.status);
+  return r.json();
+}
+function gasCall(action, extra){
+  var body = { action: action };
+  if(extra){ for(var k in extra){ if(Object.prototype.hasOwnProperty.call(extra,k)) body[k]=extra[k]; } }
+  return fetch(GAS_URL, {
+    method: 'POST',
+    credentials: 'omit',
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    body: JSON.stringify(body)
+  }).then(readJson);
+}
+function gasBoot(){
+  return fetch(GAS_URL + '?api=boot', { credentials: 'omit', cache: 'no-store' }).then(readJson);
+}
+
+/* ======== URLパラメータ ======== */
+function qs(){
+  var o = {}, s = String(location.search || '').replace(/^\?/, '');
+  if(!s) return o;
+  s.split('&').forEach(function(kv){
+    if(!kv) return;
+    var i = kv.indexOf('=');
+    var k = i < 0 ? kv : kv.slice(0,i);
+    var v = i < 0 ? '' : kv.slice(i+1);
+    try { o[decodeURIComponent(k)] = decodeURIComponent(v.replace(/\+/g,' ')); }
+    catch(e){ o[k] = v; }
+  });
+  return o;
+}
+
+/* ======== 画面制御 ======== */
+var el = function(id){ return document.getElementById(id); };
+function toast(msg){ var t=el('toast'); t.textContent=msg; t.classList.add('show'); setTimeout(function(){t.classList.remove('show')},2600); }
+function markChoices(){
+  document.querySelectorAll('.choices').forEach(function(box){
+    box.querySelectorAll('.choice').forEach(function(lab){
+      var inp=lab.querySelector('input');
+      lab.classList.toggle('on', inp.checked);
+    });
+  });
+}
+function checkedVal(name){
+  var n=document.querySelector('input[name="'+name+'"]:checked');
+  return n? n.value : '';
+}
+function isEasy(){ return checkedVal('type')==='ペイジー支払'; }
+function syncMethod(){
+  var easy=isEasy();
+  el('easyPanel').style.display = easy ? 'block' : 'none';
+  el('bankPanel').style.display = easy ? 'none' : 'block';
+  el('methodPill').textContent = '振込方法：' + (easy ? 'ペイジー（納付書）' : '銀行振込');
+  el('methodPill').className = 'pill' + (easy ? ' hot' : ' blue');
+  el('methodHint').textContent = easy
+    ? 'ペイジー支払が選ばれています。収納機関番号・納付番号・確認番号を入れてください（銀行口座の欄は使いません）。'
+    : '支払内容で「ペイジー支払」を選ぶと、収納機関番号・納付番号・確認番号の入力欄に切り替わります。';
+}
+function syncToyo(){
+  var on = checkedVal('payer')==='ﾄｳﾖｳｹﾝｾﾂﾎｰﾑｶﾌﾞｼｷｶﾞｲｼｬ';
+  el('toyoWarn').classList.toggle('show', on);
+}
+function syncBand(){
+  var b=bandOf(normDigits(el('amount').value));
+  var p=el('bandPill');
+  if(!b){ p.textContent='金額を入れると自動で決まります'; p.className='pill'; return; }
+  p.textContent='金額区分：'+b;
+  p.className='pill'+(b==='高額'?' hot':'');
+}
+function syncReport(){
+  var n=document.querySelectorAll('input[name="report"]:checked').length;
+  el('reportChoices').style.outline = n? 'none' : '2px solid #c0392b';
+}
+
+document.addEventListener('change', function(e){
+  if(e.target && (e.target.type==='radio'||e.target.type==='checkbox')){
+    markChoices(); syncMethod(); syncToyo(); checkDup(); syncReport();
+  }
+});
+
+/* ======== 日付（曜日）表示 ======== */
+['due','want'].forEach(function(id){
+  el(id).addEventListener('change', function(){
+    var p = (id==='due') ? el('dueJa') : el('wantJa');
+    var t = (id==='due') ? el('dueTime').value : el('wantTime').value;
+    p.textContent = this.value ? (dateJa(this.value) + (t? ' '+t : '')) : '未選択';
+    checkDup();
+  });
+});
+['dueTime','wantTime'].forEach(function(id){
+  el(id).addEventListener('change', function(){
+    var isDue = (id==='dueTime');
+    var d = isDue ? el('due').value : el('want').value;
+    var p = isDue ? el('dueJa') : el('wantJa');
+    if(d) p.textContent = dateJa(d) + (this.value? ' '+this.value : '');
+  });
+});
+
+/* ======== 納付番号の自動ハイフン ======== */
+el('noufuNo').addEventListener('input', function(){
+  var d = normDigits(this.value).slice(0,16);
+  var parts = [];
+  for(var i=0;i<d.length;i+=4) parts.push(d.slice(i,i+4));
+  this.value = parts.join('-');
+  el('noufuCount').textContent = d.length;
+});
+['kanriNo','kakuninNo'].forEach(function(id){
+  el(id).addEventListener('input', function(){ this.value = normDigits(this.value); });
+});
+
+/* ======== ファイル ======== */
+var selectedFile = null;
+var MAX_MB = 20;
+el('maxMb').textContent = MAX_MB;
+el('drop').addEventListener('click', function(){ el('file').click(); });
+['dragenter','dragover'].forEach(function(ev){ el('drop').addEventListener(ev,function(e){e.preventDefault();el('drop').classList.add('hot')}) });
+['dragleave','drop'].forEach(function(ev){ el('drop').addEventListener(ev,function(e){e.preventDefault();el('drop').classList.remove('hot')}) });
+el('drop').addEventListener('drop', function(e){ if(e.dataTransfer.files.length) takeFile(e.dataTransfer.files[0]); });
+el('file').addEventListener('change', function(){ if(this.files.length) takeFile(this.files[0]); });
+
+function takeFile(f){
+  var okType = /^(application\/pdf|image\/)/.test(f.type) || /\.(pdf|jpe?g|png|heic)$/i.test(f.name);
+  if(!okType){ alert('PDFまたは画像（JPG/PNG）を選んでください'); return; }
+  if(f.size > MAX_MB*1024*1024){ alert('ファイルが大きすぎます（上限'+MAX_MB+'MB）。分割するか、Driveのリンクを備考に貼ってください。'); return; }
+  selectedFile = f;
+  var list = el('fileList'); list.innerHTML='';
+  var d=document.createElement('div'); d.className='file';
+  d.innerHTML = '<span>📄 ' + esc(f.name) + '</span><span style="color:#5b6b8c">(' + Math.round(f.size/1024) + 'KB)</span><span class="x" title="削除">✕</span>';
+  d.querySelector('.x').onclick=function(ev){ ev.stopPropagation(); selectedFile=null; list.innerHTML=''; el('file').value=''; };
+  list.appendChild(d);
+}
+
+/* ======== 重複の事前チェック（送信前に警告） ======== */
+var dupTimer=null;
+function dupPayload(){
+  return {
+    type: checkedVal('type'), payMethod: isEasy()?'ペイジー':'銀行振込',
+    vendor: el('vendor').value, accNo: el('accNo').value,
+    kanriNo: el('kanriNo').value, noufuNo: el('noufuNo').value,
+    amount: el('amount').value, due: el('due').value
+  };
+}
+['vendor','accNo','amount','due','kanriNo','noufuNo'].forEach(function(id){
+  el(id).addEventListener('blur', function(){ checkDup(); });
+  el(id).addEventListener('input', function(){ clearTimeout(dupTimer); dupTimer=setTimeout(checkDup, 500); });
+});
+function checkDup(){
+  var p = dupPayload();
+  var key = isEasy() ? (p.kanriNo && p.noufuNo) : p.accNo;
+  if(!p.vendor || !key || !p.amount || !p.due) return;
+  if(!BOOT_OK) return;  /* 通信できないときは静かにあきらめる（送信時にサーバー側でも警告） */
+  gasCall('checkDuplicate', { payload: p }).then(function(res){
+    var b=el('dupBanner');
+    if(res && res.dup>0){
+      b.className='banner dup show';
+      b.innerHTML='⚠️ <b>同じ請求（取引先・振込先・金額・支払期日が一致）が '+res.dup+'件 すでに台帳にあります。</b><br>'+
+        '二重振込を防ぐため、送信前に台帳を確認してください。心当たりがあれば送信をやめてください。';
+    } else { b.className='banner dup'; b.innerHTML=''; }
+  }).catch(function(){});
+}
+
+/* ======== Slack文面プレビュー ======== */
+el('previewBtn').addEventListener('click', function(){
+  var btn=this; btn.disabled=true;
+  var box=el('previewBox');
+  gasCall('previewSlack', { payload: collectPayload() }).then(function(res){
+    btn.disabled=false;
+    box.style.display='block';
+    box.textContent = (res && res.text) ? res.text : 'プレビューを作れませんでした';
+  }).catch(function(err){
+    btn.disabled=false; box.style.display='block';
+    box.textContent='プレビューを取得できませんでした（'+err.message+'）。電波の良い場所でもう一度お試しください。';
+  });
+});
+
+/* ======== 送信 ======== */
+function collectPayload(){
+  var report = [];
+  document.querySelectorAll('input[name="report"]:checked').forEach(function(x){ report.push(x.value); });
+  return {
+    staff: el('staff').value,
+    type: checkedVal('type'),
+    urgency: checkedVal('urgency'),
+    payer: checkedVal('payer'),
+    vendor: el('vendor').value,
+    amount: el('amount').value,
+    due: el('due').value, dueTime: el('dueTime').value,
+    want: el('want').value || el('due').value,
+    wantTime: el('wantTime').value || (el('want').value ? '' : el('dueTime').value),
+    payMethod: isEasy()?'ペイジー':'銀行振込',
+    bank: el('bank').value, branch: el('branch').value, accType: checkedVal('accType'),
+    accNo: el('accNo').value, accName: el('accName').value,
+    kanriNo: el('kanriNo').value, noufuNo: el('noufuNo').value, kakuninNo: el('kakuninNo').value,
+    project: el('project').value,
+    companion: el('companion').value,
+    report: report.join('・'),
+    pdfNote: el('pdfNote').value
+  };
+}
+
+el('submitBtn').addEventListener('click', function(){
+  var errs=[];
+  var data = collectPayload();
+  if(!data.staff.trim()) errs.push('担当者名');
+  if(!data.vendor.trim()) errs.push('取引先名');
+  if(!normDigits(data.amount)) errs.push('請求金額');
+  if(!data.due) errs.push('支払期日');
+  if(!data.project.trim()) errs.push('案件名・内訳');
+  if(!data.report) errs.push('報告先');
+  if(isEasy()){
+    if(!/^\d{5}$/.test(normDigits(data.kanriNo))) errs.push('収納機関番号（5桁）');
+    if(!/^\d{16}$/.test(normDigits(data.noufuNo))) errs.push('納付番号（16桁）');
+    if(!/^\d{6}$/.test(normDigits(data.kakuninNo))) errs.push('確認番号（6桁）');
+  } else {
+    if(!data.bank.trim()) errs.push('銀行名');
+    if(!data.branch.trim()) errs.push('支店名');
+    if(!normDigits(data.accNo)) errs.push('口座番号');
+    if(!data.accName.trim()) errs.push('口座名義');
+  }
+  var eb=el('errBanner');
+  if(errs.length){
+    eb.className='banner err show';
+    eb.innerHTML='入力が足りません：<b>'+errs.join('・')+'</b>';
+    window.scrollTo({top:0,behavior:'smooth'});
+    return;
+  }
+  if(data.due < todayStr()){ if(!confirm('支払期日が過去の日付です。このまま送信しますか?')) return; }
+  if(data.payer==='ﾄｳﾖｳｹﾝｾﾂﾎｰﾑｶﾌﾞｼｷｶﾞｲｼｬ'){
+    if(!confirm('振込依頼人名が「トウヨウケンセツホーム」になっています。\nマーシャルアーツ名義ではありません。このまま送信しますか?')) return;
+  }
+  if(data.type==='手付金' || data.type==='残代金' || data.type==='キャッシュバック'){
+    if(!confirm('「'+data.type+'」は長谷川代表の承認が必要です。\n小久保さんの確認 → 代表承認 → 振込 の順で進みます。送信しますか?')) return;
+  }
+  eb.className='banner err';
+
+  var btn=el('submitBtn'); btn.disabled=true; btn.textContent='送信中…';
+  var payload = data;
+
+  function send(files){
+    payload.files = files;
+    gasCall('submitRequest', { payload: payload }).then(function(res){
+      btn.disabled=false; btn.textContent='この内容で送信する';
+      if(!res || !res.ok){
+        eb.className='banner err show';
+        eb.innerHTML='送信できませんでした：'+esc(res&&res.message?res.message:'時間をおいて再度お試しください');
+        window.scrollTo({top:0,behavior:'smooth'}); return;
+      }
+      el('viewForm').style.display='none'; el('footbar').style.display='none';
+      el('viewDone').style.display='block';
+      el('doneId').textContent = res.id;
+      el('doneMsg').innerHTML = 'Slackに共有しました（#23_請求書_振込依頼_共有チャンネル）。<br>次は <b>小久保さんの確認</b> です。' +
+        (res.warnings && res.warnings.length ? '<br><span style="color:#b26a00">確認事項：'+esc(res.warnings.join(' / '))+'</span>' : '');
+      if(res.pdfUrl){ var a=el('donePdf'); a.href=res.pdfUrl; a.style.display='inline-flex'; }
+      window.scrollTo({top:0,behavior:'smooth'});
+    }).catch(function(err){
+      btn.disabled=false; btn.textContent='この内容で送信する';
+      eb.className='banner err show';
+      eb.innerHTML='通信エラー：'+esc(err.message)+'　（電波の良い場所でもう一度送信してください）';
+      window.scrollTo({top:0,behavior:'smooth'});
+    });
+  }
+
+  if(selectedFile){
+    var rd = new FileReader();
+    rd.onload = function(){
+      var b64 = String(rd.result).split(',')[1];
+      send([{name: selectedFile.name, mime: selectedFile.type || 'application/pdf', data: b64}]);
+    };
+    rd.onerror = function(){ btn.disabled=false; btn.textContent='この内容で送信する'; eb.className='banner err show'; eb.innerHTML='ファイルの読み込みに失敗しました'; };
+    rd.readAsDataURL(selectedFile);
+  } else { send([]); }
+});
+
+function todayStr(){ var d=new Date(); var m=('0'+(d.getMonth()+1)).slice(-2); var dd=('0'+d.getDate()).slice(-2); return d.getFullYear()+'-'+m+'-'+dd; }
+function resetForm(){
+  ['staff','vendor','amount','bank','branch','accNo','accName','project','companion','pdfNote','due','want','dueTime','wantTime','kanriNo','noufuNo','kakuninNo'].forEach(function(id){ el(id).value=''; });
+  selectedFile=null; el('fileList').innerHTML=''; el('file').value='';
+  el('amountYen').textContent='-';
+  el('dueJa').textContent='曜日は自動で付きます'; el('wantJa').textContent='期日より前の日を指定';
+  el('noufuCount').textContent='0';
+  el('previewBox').style.display='none';
+  el('dupBanner').className='banner dup'; el('dupBanner').innerHTML='';
+  el('errBanner').className='banner err'; el('errBanner').innerHTML='';
+  setRadio('type','その他'); setRadio('urgency','通常');
+  setRadio('payer','ｶﾌﾞｼｷｶﾞｲｼｬﾏｰｼｬﾙｱｰﾂ'); setRadio('accType','普通');
+  document.querySelectorAll('input[name="report"]').forEach(function(x){ x.checked = (x.value==='CEO'); });
+  syncBand();
+  el('viewDone').style.display='none'; el('viewForm').style.display='block'; el('footbar').style.display='flex';
+  markChoices(); syncMethod(); syncToyo(); syncReport(); window.scrollTo({top:0,behavior:'smooth'});
+}
+function setRadio(name, value){
+  document.querySelectorAll('input[name="'+name+'"]').forEach(function(x){ x.checked = (x.value===value); });
+}
+el('amount').addEventListener('input', function(){ el('amountYen').textContent = yen(normDigits(this.value)); syncBand(); });
+
+/* ======== ボード ======== */
+function findRow(id){
+  var rows = (BOOT && BOOT.board) || [];
+  for(var i=0;i<rows.length;i++){ if(rows[i].id===id) return rows[i]; }
+  return null;
+}
+function renderBoard(){
+  var rows = (BOOT && BOOT.board) || [];
+  var info = el('boardInfo');
+  var nCeo = rows.filter(function(r){return r.judge==='代表承認待ち';}).length;
+  var nKok = rows.filter(function(r){return r.judge==='小久保確認待ち';}).length;
+  var nOk  = rows.filter(function(r){return r.judge==='振込OK';}).length;
+  info.innerHTML = '<b>未処理 '+rows.length+'件</b>　｜　小久保確認待ち '+nKok+'件　｜　代表承認待ち '+nCeo+'件　｜　振込OK '+nOk+'件' +
+    '<br><span class="hint">請求書を確認して、ボタン1つで承認・完了まで進めます。</span>';
+  var box = el('boardList');
+  if(!rows.length){
+    box.innerHTML = '<div class="empty">'+(BOOT_OK ? '未処理の依頼はありません ✅<br><span class="hint">新しい依頼はフォームから送信されます</span>' : 'ボードを読み込めませんでした。<br><button class="btn small" type="button" id="boardRetry">再読み込み</button>')+'</div>';
+    var rb = el('boardRetry'); if(rb) rb.addEventListener('click', function(){ refreshBoard(true); });
+    return;
+  }
+  box.innerHTML = rows.map(function(r){
+    var cls = r.judge==='代表承認待ち' ? 'ceo' : (r.judge==='振込OK' ? 'ready' : 'wait');
+    var easy = (r.payMethod==='ペイジー');
+    var chips = '<span class="chip amount">'+yen(r.amount)+'</span>' +
+      '<span class="chip">'+esc(r.type)+'</span>' +
+      '<span class="chip">'+esc(r.band||'')+'</span>' +
+      '<span class="chip">期日 '+esc(r.dueLine||r.due||'-')+'</span>' +
+      '<span class="chip '+ (r.judge==='振込OK'?'ok':'warn') +'">'+esc(r.judge)+'</span>' +
+      (easy ? '<span class="chip easy">ペイジー</span>' : '') +
+      (r.dup>0 ? '<span class="chip ceo">⚠️重複疑い'+r.dup+'件</span>' : '') +
+      (r.urgency && /^(緊急|至急)/.test(r.urgency) ? '<span class="chip ceo">'+esc(r.urgency)+'</span>' : '') +
+      (r.report ? '<span class="chip">📣 '+esc(r.report)+'</span>' : '');
+    var dest = easy
+      ? ('ペイジー 収納機関番号 '+esc(r.kanriNo||'-')+' ／ 納付番号 '+esc(r.noufuNo||'-')+' ／ 確認番号 '+esc(r.kakuninNo||'-'))
+      : (esc(r.bank)+' '+esc(r.branch)+' '+esc(r.accType)+' '+esc(r.accNo));
+    var acts = [];
+    if(r.pdf) acts.push('<a class="btn small ghost" href="'+esc(r.pdf)+'" target="_blank" rel="noopener">📄 請求書</a>');
+    if(r.kokubo!=='OK') acts.push('<button class="btn small ok" data-id="'+esc(r.id)+'" data-act="kokubo">✅ 確認OK</button>');
+    acts.push('<button class="btn small ghost" data-id="'+esc(r.id)+'" data-act="kokubo_ng">↩︎ 差戻し</button>');
+    if((r.type==='手付金'||r.type==='残代金'||r.type==='キャッシュバック') && r.ceo!=='承認OK') acts.push('<button class="btn small gold" data-id="'+esc(r.id)+'" data-act="ceo">👑 代表承認OK</button>');
+    if(r.judge==='振込OK') acts.push('<button class="btn small paid" data-id="'+esc(r.id)+'" data-act="paid">💸 振込完了</button>');
+    return '<div class="board-item '+cls+'">' +
+      '<h3>'+esc(r.vendor)+' <span class="meta">'+esc(r.id)+'</span></h3>' +
+      '<div class="meta">'+esc(r.staff)+' ／ 受付 '+esc(r.ts)+' ／ '+dest+'</div>' +
+      '<div class="chips">'+chips+'</div>' +
+      '<p class="detail">'+esc(r.project)+(r.payer==='ﾄｳﾖｳｹﾝｾﾂﾎｰﾑｶﾌﾞｼｷｶﾞｲｼｬ'?'\n🚨 東洋建設ホーム名義':'')+'</p>' +
+      '<div class="acts">'+acts.join('')+'</div>' +
+      '</div>';
+  }).join('');
+  box.querySelectorAll('button[data-act]').forEach(function(b){
+    b.addEventListener('click', function(){ doAction(b); });
+  });
+}
+
+function refreshBoard(showErr){
+  return gasBoot().then(function(d){
+    applyBoot(d);
+    renderBoard();
+  }).catch(function(err){
+    if(showErr) toast('読み込みできませんでした：'+err.message);
+    BOOT_OK = false;
+    renderBoard();
+  });
+}
+
+function doAction(btn){
+  var id=btn.dataset.id, act=btn.dataset.act;
+  if(act==='paid'){ openPaid(id, btn); return; }
+  var label={kokubo:'小久保 確認OK',kokubo_ng:'差戻し',ceo:'代表 承認OK'}[act]||act;
+  var extra = act==='kokubo' ? '\n\n確認OKとして記録し、Slackの依頼投稿に :確認: スタンプを付けます。' : '';
+  if(!confirm(id+' を「'+label+'」で処理します。よろしいですか?'+extra)) return;
+  runBoardAction(btn, id, act);
+}
+
+function runBoardAction(btn, id, act){
+  btn.disabled=true; var before=btn.textContent; btn.textContent='処理中…';
+  gasCall('boardAction', { id:id, act:act, note:'' }).then(function(res){
+    if(!res || !res.ok){
+      alert('処理できませんでした：'+esc(res&&res.message?res.message:''));
+      btn.disabled=false; btn.textContent=before; return;
+    }
+    toast(res.message||'処理しました');
+    refreshBoard(false);
+  }).catch(function(err){
+    alert('通信エラー：'+err.message);
+    btn.disabled=false; btn.textContent=before;
+  });
+}
+
+/* ---- 振込完了（振込受付書を任意で添付） ---- */
+var paidTarget = null;
+function openPaid(id, btn){
+  paidTarget = {id:id, btn:btn, file:null};
+  el('paidTargetLabel').textContent = id + ' を「振込完了」にします。';
+  el('paidFileList').innerHTML = ''; el('paidFile').value = '';
+  el('paidMaxMb').textContent = MAX_MB;
+  el('paidModal').classList.add('show');
+}
+function closePaid(){ el('paidModal').classList.remove('show'); paidTarget = null; }
+el('paidCancel').addEventListener('click', closePaid);
+el('paidDrop').addEventListener('click', function(){ el('paidFile').click(); });
+['dragenter','dragover'].forEach(function(ev){ el('paidDrop').addEventListener(ev,function(e){e.preventDefault();el('paidDrop').classList.add('hot')}) });
+['dragleave','drop'].forEach(function(ev){ el('paidDrop').addEventListener(ev,function(e){e.preventDefault();el('paidDrop').classList.remove('hot')}) });
+el('paidDrop').addEventListener('drop', function(e){ if(e.dataTransfer.files.length) takeReceipt(e.dataTransfer.files[0]); });
+el('paidFile').addEventListener('change', function(){ if(this.files.length) takeReceipt(this.files[0]); });
+function takeReceipt(f){
+  var okType = /^(application\/pdf|image\/)/.test(f.type) || /\.(pdf|jpe?g|png|heic)$/i.test(f.name);
+  if(!okType){ alert('PDFまたは画像（JPG/PNG）を選んでください'); return; }
+  if(f.size > MAX_MB*1024*1024){ alert('ファイルが大きすぎます（上限'+MAX_MB+'MB）'); return; }
+  paidTarget.file = f;
+  var list = el('paidFileList'); list.innerHTML='';
+  var d=document.createElement('div'); d.className='file';
+  d.innerHTML = '<span>📎 ' + esc(f.name) + '</span><span style="color:#5b6b8c">(' + Math.round(f.size/1024) + 'KB)</span><span class="x" title="削除">✕</span>';
+  d.querySelector('.x').onclick=function(ev){ ev.stopPropagation(); paidTarget.file=null; list.innerHTML=''; el('paidFile').value=''; };
+  list.appendChild(d);
+}
+el('paidRun').addEventListener('click', function(){
+  if(!paidTarget) return;
+  var id = paidTarget.id, file = paidTarget.file;
+  el('paidRun').disabled = true;
+  function done(res){
+    el('paidRun').disabled = false;
+    if(!res || !res.ok){ alert('処理できませんでした：'+esc(res&&res.message?res.message:'')); return; }
+    closePaid();
+    toast(res.message||'振込完了にしました');
+    refreshBoard(false);
+  }
+  function fail(err){ el('paidRun').disabled = false; alert('通信エラー：'+err.message); }
+  if(file){
+    var rd = new FileReader();
+    rd.onload = function(){
+      var b64 = String(rd.result).split(',')[1];
+      gasCall('boardActionWithFile', { id:id, act:'paid', note:'', file:{name:file.name, mime:file.type||'application/pdf', data:b64} })
+        .then(done).catch(fail);
+    };
+    rd.onerror = function(){ el('paidRun').disabled=false; alert('ファイルの読み込みに失敗しました'); };
+    rd.readAsDataURL(file);
+  } else {
+    gasCall('boardAction', { id:id, act:'paid', note:'' }).then(done).catch(fail);
+  }
+});
+
+/* ======== Slackのボタン（?act=&id=&t=）から開いたときの確認 ======== */
+var ACT_LABEL = { kokubo:'✅ 小久保 確認OK', kokubo_ng:'↩︎ 小久保 差戻し', ceo:'👑 代表 承認OK', ceo_ng:'🚫 代表 却下', paid:'💸 振込完了', cancel:'🗑 取消' };
+var pendingAct = null;
+function openActModal(q){
+  pendingAct = { id: q.id, act: q.act, t: q.t };
+  var r = findRow(q.id);
+  var lines = ['依頼ID：' + q.id];
+  if(r){
+    lines.push('取引先：' + (r.vendor||'-'));
+    lines.push('金額：' + yen(r.amount));
+    lines.push('支払期日：' + (r.dueLine||r.due||'-'));
+    lines.push('支払内容：' + (r.type||'-'));
+    lines.push('現在の判定：' + (r.judge||'-'));
+    lines.push('案件名：' + (r.project||'-'));
+  } else {
+    lines.push('（依頼の内容を読み込めませんでした。ボードで確認してください）');
+  }
+  el('actTitle').textContent = 'この操作を実行しますか？';
+  el('actBody').textContent = lines.join('\n');
+  el('actRun').textContent = (ACT_LABEL[q.act]||q.act) + ' を実行する';
+  el('actRun').disabled = false;
+  el('actModal').classList.add('show');
+}
+function closeAct(){ el('actModal').classList.remove('show'); pendingAct = null; }
+el('actCancel').addEventListener('click', closeAct);
+el('actRun').addEventListener('click', function(){
+  if(!pendingAct) return;
+  var p = pendingAct;
+  el('actRun').disabled = true;
+  el('actRun').textContent = '処理中…';
+  gasCall('signedAction', { id:p.id, act:p.act, t:p.t }).then(function(res){
+    el('actRun').disabled = false;
+    if(res && res.ok){
+      el('actTitle').textContent = '処理しました';
+      el('actBody').textContent = (res.message||'完了しました') + (res.judge ? '\n現在の判定：' + res.judge : '') +
+        (p.act==='paid' ? '\n\n振込受付書は依頼投稿のスレッドに添付してください。' : '');
+      el('actRun').style.display = 'none';
+      refreshBoard(false);
+    } else {
+      el('actTitle').textContent = '処理できませんでした';
+      el('actBody').textContent = (res && res.message) ? res.message : '時間をおいてもう一度お試しください。';
+      el('actRun').disabled = false;
+      el('actRun').textContent = (ACT_LABEL[p.act]||p.act) + ' を実行する';
+    }
+  }).catch(function(err){
+    el('actRun').disabled = false;
+    el('actRun').textContent = (ACT_LABEL[p.act]||p.act) + ' を実行する';
+    el('actBody').textContent = '通信エラー：' + err.message + '\n電波の良い場所でもう一度お試しください。';
+  });
+});
+
+/* ======== 起動 ======== */
+function showView(view){
+  if(view==='board'){
+    el('pageTitle').textContent='承認・振込ボード';
+    el('pageSub').textContent='確認OKで :確認: 、振込完了で 💰 のスタンプが依頼投稿に付きます（台帳も自動更新）';
+    el('tabBoard').classList.add('on');
+    el('viewForm').style.display='none'; el('viewBoard').style.display='block';
+    el('footbar').style.display='none';
+  } else {
+    el('tabForm').classList.add('on');
+    el('viewForm').style.display='block'; el('footbar').style.display='flex';
+  }
+}
+function showBootError(msg){
+  var b = el('bootError');
+  b.className = 'banner err show';
+  b.innerHTML = '⚠️ サーバーと通信できませんでした（' + esc(msg) + '）。' +
+    '電波の良い場所でもう一度お試しください。' +
+    '<br>フォームの入力はこのまま続けられ、<b>送信するときに再通信します</b>。' +
+    ' <button class="btn small ghost" type="button" id="bootRetry">再読み込み</button>';
+  var r = el('bootRetry');
+  if(r) r.addEventListener('click', function(){ b.className='banner err'; b.innerHTML=''; loadBoot(); });
+}
+function applyBoot(data){
+  if(!data || data.ok === false) throw new Error('設定を取得できませんでした');
+  BOOT = { view: data.view || 'form', board: data.board || [], config: data.config || {} };
+  BOOT_OK = true;
+  if(BOOT.config.maxMb){ MAX_MB = Number(BOOT.config.maxMb) || MAX_MB; }
+  if(BOOT.config.band){ BAND = Number(BOOT.config.band) || BAND; }
+  el('maxMb').textContent = MAX_MB;
+  el('paidMaxMb').textContent = MAX_MB;
+  el('bootError').className = 'banner err';
+  el('bootError').innerHTML = '';
+  syncBand();
+}
+function loadBoot(){
+  return gasBoot().then(applyBoot);
+}
+
+(function init(){
+  var q = qs();
+  VIEW = (q.p === 'board') ? 'board' : 'form';
+  showView(VIEW);
+  markChoices();
+  if(VIEW==='form'){ syncMethod(); syncToyo(); syncBand(); syncReport(); }
+  else { el('boardList').innerHTML = '<div class="empty">読み込み中…</div>'; }
+
+  loadBoot().then(function(){
+    if(VIEW==='board') renderBoard();
+  }).catch(function(err){
+    showBootError(err && err.message ? err.message : '通信エラー');
+    if(VIEW==='board' || (q.act && q.id && q.t)) renderBoard();
+  }).then(function(){
+    if(q.act && q.id && q.t) openActModal(q);
+  });
+})();
+</script>
+</body>
+</html>
