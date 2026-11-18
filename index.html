@@ -2,6 +2,7 @@
 <html lang="ja">
 <head>
 <meta charset="utf-8">
+<title>Martial Arts｜振込依頼</title>
 <style>
   :root{
     --navy:#1f3864; --navy-2:#2c4a80; --ink:#1b2437; --muted:#5b6b8c;
@@ -952,6 +953,7 @@ el('actRun').addEventListener('click', function(){
 
 /* ======== 起動 ======== */
 function showView(view){
+  document.title = (view==='board') ? '承認・振込ボード｜Martial Arts' : '振込依頼フォーム｜Martial Arts';
   if(view==='board'){
     el('pageTitle').textContent='承認・振込ボード';
     el('pageSub').textContent='確認OKで :確認: 、振込完了で 💰 のスタンプが依頼投稿に付きます（台帳も自動更新）';
