@@ -473,8 +473,10 @@ function gasCall(action, extra){
     body: JSON.stringify(body)
   }).then(readJson);
 }
+/* 起動データ。GASの /exec はGETだとCORSヘッダーが付かず外部HTMLから読めないため、
+   JSONのPOST（Content-Type: text/plain）で取る。?api=boot はGAS側にも残してある。 */
 function gasBoot(){
-  return fetch(GAS_URL + '?api=boot', { credentials: 'omit', cache: 'no-store' }).then(readJson);
+  return gasCall('boardData');
 }
 
 /* ======== URLパラメータ ======== */
