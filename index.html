@@ -133,7 +133,7 @@
   <!-- =================== フォーム =================== -->
   <div id="viewForm" style="display:none">
     <div class="banner info" style="display:block">
-      承認の順番：<b>① 投稿内容と請求書の確認（小久保）→ ② 振込の実行・振込受付書の投稿（長谷川CEO）</b>。
+      承認の順番：<b>① 投稿内容と請求書の確認（小久保）→ ② 振込の実行・振込明細の投稿（長谷川CEO）</b>。
       確認で <b>:確認:</b> スタンプ、振込後に <b>💰</b> スタンプが付きます。手付金・残代金・キャッシュバックは長谷川代表の承認OKまで振込完了にできません。
     </div>
     <div class="banner dup" id="dupBanner"></div>
@@ -371,22 +371,22 @@
 </div>
 <div class="toast" id="toast"></div>
 
-<!-- =================== 振込完了（振込受付書つき） =================== -->
+<!-- =================== 振込完了（振込明細・受付書つき） =================== -->
 <div class="modal" id="paidModal">
   <div class="modal-card">
-    <h2>💸 振込完了にする</h2>
+    <h2>💸 振込完了にする（振込明細を貼る）</h2>
     <p class="hint" id="paidTargetLabel" style="margin-bottom:12px"></p>
     <div class="field" style="margin-bottom:12px">
-      <label>振込受付書（任意）</label>
+      <label>振込明細・振込受付書</label>
       <div class="drop" id="paidDrop">
         <div><b>タップして選択</b> または ここにドラッグ</div>
         <div class="hint" style="margin-top:4px">PDF・画像（JPG/PNG）／1ファイル <span id="paidMaxMb">20</span>MBまで</div>
         <input type="file" id="paidFile" accept="application/pdf,image/*" style="display:none">
       </div>
       <div id="paidFileList"></div>
-      <p class="hint">選んだファイルはGoogle Driveの「振込依頼_請求書」に保存され、Slackのスレッドにリンクが返ります。未選択のままでも完了できます。</p>
+      <p class="hint">振込が終わったら、振込明細（受付書）のスクショやPDFをここに入れてから「振込完了にする」を押してください。ファイルはGoogle Driveの「振込依頼_請求書」に保存し、Slackの依頼スレッドからも開けます。</p>
     </div>
-    <div class="banner info" style="display:block;margin-bottom:14px">振込を実行したあとに押してください。依頼投稿に <b>💰 スタンプ</b> が付きます。</div>
+    <div class="banner info" style="display:block;margin-bottom:14px">振込を実行したあとに押してください。依頼投稿に <b>💰 スタンプ</b> が付きます。<br>完了にするとこのカードはボードから消えるので、明細はその前に貼ってください。</div>
     <div class="acts">
       <button class="btn ghost" id="paidCancel" type="button">キャンセル</button>
       <button class="btn primary big" id="paidRun" type="button">振込完了にする</button>
@@ -798,7 +798,7 @@ function renderBoard(){
     if(r.kokubo!=='OK') acts.push('<button class="btn small ok" data-id="'+esc(r.id)+'" data-act="kokubo">✅ 確認OK</button>');
     acts.push('<button class="btn small ghost" data-id="'+esc(r.id)+'" data-act="kokubo_ng">↩︎ 差戻し</button>');
     if((r.type==='手付金'||r.type==='残代金'||r.type==='キャッシュバック') && r.ceo!=='承認OK') acts.push('<button class="btn small gold" data-id="'+esc(r.id)+'" data-act="ceo">👑 代表承認OK</button>');
-    if(r.judge==='振込OK') acts.push('<button class="btn small paid" data-id="'+esc(r.id)+'" data-act="paid">💸 振込完了</button>');
+    if(r.judge==='振込OK') acts.push('<button class="btn small paid" data-id="'+esc(r.id)+'" data-act="paid">💸 振込完了（明細を貼る）</button>');
     return '<div class="board-item '+cls+'">' +
       '<h3>'+esc(r.vendor)+' <span class="meta">'+esc(r.id)+'</span></h3>' +
       '<div class="meta">'+esc(r.staff)+' ／ 受付 '+esc(r.ts)+' ／ '+dest+'</div>' +
@@ -847,7 +847,7 @@ function runBoardAction(btn, id, act){
   });
 }
 
-/* ---- 振込完了（振込受付書を任意で添付） ---- */
+/* ---- 振込完了（振込明細・受付書を添付） ---- */
 var paidTarget = null;
 function openPaid(id, btn){
   paidTarget = {id:id, btn:btn, file:null};
@@ -877,6 +877,8 @@ function takeReceipt(f){
 el('paidRun').addEventListener('click', function(){
   if(!paidTarget) return;
   var id = paidTarget.id, file = paidTarget.file;
+  // 貼り忘れ防止：明細なしで完了しようとしたら一度だけ確認する（完了後はボードから消えて貼れなくなるため）
+  if(!file && !confirm('振込明細（受付書）を貼らずに「振込完了」にします。よろしいですか？\n\n※完了にするとカードはボードから消えるので、あとからボードには貼れません（Slackのスレッドには貼れます）。')) return;
   el('paidRun').disabled = true;
   function done(res){
     el('paidRun').disabled = false;
@@ -935,7 +937,7 @@ el('actRun').addEventListener('click', function(){
     if(res && res.ok){
       el('actTitle').textContent = '処理しました';
       el('actBody').textContent = (res.message||'完了しました') + (res.judge ? '\n現在の判定：' + res.judge : '') +
-        (p.act==='paid' ? '\n\n振込受付書は依頼投稿のスレッドに添付してください。' : '');
+        (p.act==='paid' ? '\n\n振込明細を貼る場合は、ボードの「💸 振込完了（明細を貼る）」から添付できます（Slackのスレッドにも貼れます）。' : '');
       el('actRun').style.display = 'none';
       refreshBoard(false);
     } else {
