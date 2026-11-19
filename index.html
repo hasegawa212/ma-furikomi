@@ -332,7 +332,8 @@
 
       <div class="field">
         <label>備考<span class="opt">任意</span></label>
-        <input type="text" id="pdfNote" placeholder="振込依頼人名「その他」の場合の名義など" autocomplete="off">
+        <input type="text" id="note" placeholder="振込依頼人名「その他」の場合の名義など" autocomplete="off">
+        <p class="hint">ここに書いた内容は、Slack投稿の「🗒 備考」にそのまま出ます（請求書PDFとは別の欄です）。請求書が大きすぎて添付できないときは、Driveのリンクをここに貼ると請求書PDFとして扱います。</p>
       </div>
 
       <div class="field">
@@ -659,7 +660,7 @@ function collectPayload(){
     project: el('project').value,
     companion: el('companion').value,
     report: report.join('・'),
-    pdfNote: el('pdfNote').value
+    note: el('note').value
   };
 }
 
@@ -738,7 +739,7 @@ el('submitBtn').addEventListener('click', function(){
 
 function todayStr(){ var d=new Date(); var m=('0'+(d.getMonth()+1)).slice(-2); var dd=('0'+d.getDate()).slice(-2); return d.getFullYear()+'-'+m+'-'+dd; }
 function resetForm(){
-  ['staff','vendor','amount','bank','branch','accNo','accName','project','companion','pdfNote','due','want','dueTime','wantTime','kanriNo','noufuNo','kakuninNo'].forEach(function(id){ el(id).value=''; });
+  ['staff','vendor','amount','bank','branch','accNo','accName','project','companion','note','due','want','dueTime','wantTime','kanriNo','noufuNo','kakuninNo'].forEach(function(id){ el(id).value=''; });
   selectedFile=null; el('fileList').innerHTML=''; el('file').value='';
   el('amountYen').textContent='-';
   el('dueJa').textContent='曜日は自動で付きます'; el('wantJa').textContent='期日より前の日を指定';
