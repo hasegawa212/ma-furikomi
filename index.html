@@ -339,6 +339,7 @@
       <div class="field">
         <button class="btn small ghost" id="previewBtn" type="button">👀 Slackに投稿される文面を確認する</button>
         <pre class="preview" id="previewBox" style="display:none"></pre>
+        <p class="hint" id="previewStatus" style="margin-top:6px"></p>
       </div>
     </div>
   </div>
@@ -460,20 +461,251 @@ function dueLine(d,t){ var s=dateJa(d); if(!s) return ''; var tt=timeText(t); re
 function bandOf(n){ var v=Number(n); if(!isFinite(v)||v<=0) return ''; return v<=BAND ? '50万円以下' : '高額'; }
 function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];}); }
 
+/* =====================================================================
+ *  Slack投稿文面のプレビュー（端末内で組み立てる）
+ *  ・GAS の buildSlackText() と同じ並び・同じ表記にする（テストで一致を固定）
+ *  ・サーバーの応答が返らない時でも「投稿前に文面を確認する」が必ずできるよう、
+ *    通信に頼らず画面の入力だけで作る（2026/11/20 小久保さんの報告への修正）
+ * ===================================================================== */
+var PV_FILEBOT = 'U0APSQEBQBV';               /* @file-bot-2（Alrit自動格納） */
+var PV_CEO_UID = 'U09ESD7T79V';               /* 長谷川 光/代表 */
+var PV_PAYER_MARTIAL = 'ｶﾌﾞｼｷｶﾞｲｼｬﾏｰｼｬﾙｱｰﾂ';
+var PV_PAYER_TOYO    = 'ﾄｳﾖｳｹﾝｾﾂﾎｰﾑｶﾌﾞｼｷｶﾞｲｼｬ';
+var PV_PAYER_OTHER   = 'その他（備考参照）';
+var PV_SEP = '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━';
+
+/* 支払内容の正規化（GAS の normType と同じ） */
+function pvType(s){
+  var t = toHalfAscii(s)+'|'+normKana(s);
+  if(/手付|手附|てつけ/.test(t)) return '手付金';
+  if(/キャッシュ\s*バック|ｷｬｯｼｭﾊﾞｯｸ|CB|返金/i.test(t)) return 'キャッシュバック';
+  if(/ペイジー|ﾍﾟｲｼﾞｰ|payeasy|Pay-easy/i.test(t)) return 'ペイジー支払';
+  if(/残代金|残金/.test(t)) return '残代金';
+  if(/税金|税込?納付|納税|固定資産税|消費税/.test(t)) return '税金';
+  return 'その他';
+}
+function pvNeedsCeo(t){ t = pvType(t); return t==='手付金' || t==='残代金' || t==='キャッシュバック'; }
+function pvPayer(s){
+  var t = toHalfAscii(s)+'|'+normKana(s);
+  if(/東洋建設|ﾄｳﾖｳｹﾝｾﾂ/.test(t)) return PV_PAYER_TOYO;
+  if(/その他|備考/.test(t)) return PV_PAYER_OTHER;
+  return PV_PAYER_MARTIAL;
+}
+function pvAccType(s){
+  var t = toHalfAscii(s);
+  if(/当座/.test(t)) return '当座';
+  if(/貯蓄|定期/.test(t)) return '貯蓄';
+  return '普通';
+}
+function pvUrgency(s){
+  var t = toHalfAscii(s);
+  if(/至急|当日|前日|sokkin/i.test(t)) return '至急！！（前日・当日）';
+  if(/緊急/.test(t)) return '緊急！（3営業日以内）';
+  return '通常';
+}
+function pvCompanion(s){
+  var t = normKana(s);
+  if(!t) return '';
+  if(/^(ﾅｼ|なし|無し|無|-|－)$/.test(t)) return '';
+  return t;
+}
+function pvReport(s){
+  var t = toHalfAscii(s)+'|'+normKana(s);
+  var out = [];
+  if(/CEO|ｃｅｏ|代表|長谷川/i.test(t)) out.push('CEO');
+  if(/小久保|ｺｸﾎﾞ|課長/.test(t)) out.push('小久保');
+  return out.length ? out.join('・') : 'CEO';
+}
+/* 納付番号の表示（4桁ずつハイフン区切り） */
+function pvNoufu(s){
+  var d = normDigits(s);
+  if(!d) return '';
+  if(d.length !== 16) return d;
+  return d.slice(0,4)+'-'+d.slice(4,8)+'-'+d.slice(8,12)+'-'+d.slice(12,16);
+}
+/* 日付 → 'YYYY/MM/DD'（解釈できなければ空） */
+function pvYmd(v){
+  if(v==null || v==='') return '';
+  var t = toHalfAscii(v).replace(/[年月]/g,'/').replace(/日/g,'').replace(/[（(].*?[）)]/g,'');
+  var m = t.match(/(\d{4})\s*[\/\-\.]\s*(\d{1,2})\s*[\/\-\.]\s*(\d{1,2})/);
+  if(!m) m = t.match(/^(\d{4})(\d{2})(\d{2})$/);
+  if(!m) return '';
+  var y = parseInt(m[1],10), mo = parseInt(m[2],10), da = parseInt(m[3],10);
+  if(!(y>=2000 && y<=2100) || mo<1 || mo>12 || da<1 || da>31) return '';
+  function p2(n){ return (n<10?'0':'')+n; }
+  return y+'/'+p2(mo)+'/'+p2(da);
+}
+/* 時刻 → 'HH:MM'（解釈できなければ空） */
+function pvTime(s){
+  if(s==null || s==='') return '';
+  var t = toHalfAscii(s).replace(/\s+/g,'');
+  if(!t) return '';
+  var h, mi;
+  if(/^\d{3,4}$/.test(t)){
+    h = parseInt(t.slice(0,t.length-2),10); mi = parseInt(t.slice(-2),10);
+  } else {
+    var m = t.match(/^(\d{1,2})[:時](\d{1,2})分?$/);
+    if(!m) m = t.match(/^(\d{1,2})時$/);
+    if(!m) m = t.match(/^(\d{1,2})[:時](\d{1,2})/);
+    if(!m) return '';
+    h = parseInt(m[1],10); mi = (m[2]===undefined ? 0 : parseInt(m[2],10));
+  }
+  if(h===24) h=0;
+  if(!(h>=0 && h<=23) || !(mi>=0 && mi<=59)) return '';
+  function p2(n){ return (n<10?'0':'')+n; }
+  return p2(h)+':'+p2(mi);
+}
+/* 日付＋時刻 → '2026/11/20（金） 15:00' */
+function pvDateLine(ymd, time){
+  var y = pvYmd(ymd);
+  if(!y) return '';
+  var p = y.split('/');
+  var d = new Date(Number(p[0]), Number(p[1])-1, Number(p[2]));
+  var s = y+'（'+WEEK[d.getDay()]+'）';
+  var t = pvTime(time);
+  return t ? s+' '+t : s;
+}
+/* 1行に畳む（GAS の oneLine_ と同じ） */
+function pvOneLine(s){
+  var t = String(s==null?'':s);
+  t = t.split(String.fromCharCode(13)).join('');
+  return t.split(String.fromCharCode(10)).join(' / ');
+}
+
+/**
+ * Slackに投稿される文面（プレビュー）。
+ * GAS の buildSlackText(rec, {}) と同じ文字列を返す。
+ * @param {Object} p フォームの入力（collectPayload の戻り値）
+ */
+function slackPreviewText(p){
+  p = p || {};
+  var type = pvType(p.type);
+  var pmRaw = (type === 'ペイジー支払') ? 'ペイジー' : String(p.payMethod==null?'':p.payMethod);
+  var pm = /ペイジー|ﾍﾟｲｼﾞｰ|payeasy|Pay-easy/i.test(pmRaw) ? 'ペイジー' : '銀行振込';
+  var isEasy = (type === 'ペイジー支払' || pm === 'ペイジー');
+  var payer = pvPayer(p.payer);
+  var band = bandOf(normDigits(p.amount));
+
+  /* 備考：URLだけなら請求書のリンクとして扱う（GAS の decorate_ と同じ） */
+  var note = String(p.note==null?'':p.note).trim();
+  var pdfUrl = String(p.pdfUrl==null?'':p.pdfUrl).trim();
+  var isLink = (note.indexOf('http://')===0 || note.indexOf('https://')===0) && note.indexOf(' ')<0;
+  if(!pdfUrl && isLink){ pdfUrl = note; note = ''; }
+
+  var want = pvYmd(p.want), wantT = pvTime(p.wantTime);
+  if(!want){ want = pvYmd(p.due); wantT = pvTime(p.dueTime); }
+
+  var project = String(p.project==null?'':p.project)
+    .replace(/\r\n/g,'\n').replace(/\n{3,}/g,'\n\n').replace(/^\s+|\s+$/g,'');
+
+  var L = [];
+  L.push('<@'+PV_FILEBOT+'|file-bot-2>');
+  if(pvNeedsCeo(type)){
+    L.push('🚨【要・代表承認：'+type+'】');
+    L.push('<@'+PV_CEO_UID+'|長谷川代表> 承認をお願いします');
+  }
+  L.push('💰【振込依頼】💰※'+band);
+  L.push('お振込のご対応の程、お願い致します！🙇‍♂️');
+  L.push('📋【入力項目】');
+  if(payer === PV_PAYER_TOYO){
+    L.push('🚨⚠️ トウヨウケンセツホーム ⚠️🚨');
+    L.push('※マーシャルアーツ名義ではありません！');
+  }
+
+  L.push('🪙 支払内容');
+  L.push(type);
+
+  L.push('🏢 取引先名（半角ｶﾀｶﾅ）');
+  L.push(normKana(p.vendor) || '-');
+
+  L.push('💴 請求金額');
+  L.push(yen(normDigits(p.amount)));
+
+  L.push('📅 支払期日');
+  L.push(pvDateLine(p.due, p.dueTime) || '-');
+
+  L.push('⏰ 処理希望日');
+  L.push(pvDateLine(want, wantT) || '-');
+
+  if(isEasy){
+    L.push(':alphabet-yellow-p: ペイジー情報');
+    L.push('収納機関番号：' + (normDigits(p.kanriNo) || '-'));
+    L.push('納付番号：' + (pvNoufu(p.noufuNo) || '-'));
+    L.push('確認番号：' + (normDigits(p.kakuninNo) || '-'));
+    L.push('（銀行口座への振込ではありません。ペイジー対応のATM・ネットバンキングで納付）');
+  } else {
+    L.push('🏦 振込先情報');
+    L.push((p.bank || '-') + '／' + (p.branch || '-') + '／' + pvAccType(p.accType));
+    L.push('口座番号：' + (normDigits(p.accNo) || '-'));
+    L.push('口座名義：' + (normKana(p.accName) || '-') + '（半角ｶﾀｶﾅ）');
+  }
+
+  L.push('✍️ 振込依頼人名');
+  L.push(payer);
+
+  L.push('📝 案件名・内訳');
+  L.push(String(project || '-').replace(/\r?\n/g, ' / '));
+
+  L.push('👥 同行者');
+  L.push(pvCompanion(p.companion) || 'なし');
+
+  L.push('🟢 緊急度');
+  L.push(pvUrgency(p.urgency));
+
+  L.push('📣 振込依頼投稿の報告先');
+  L.push(pvReport(p.report));
+
+  L.push('👤 担当者名（半角ｶﾀｶﾅ）');
+  L.push(normKana(p.staff) || '-');
+
+  L.push('📎 請求書PDF');
+  if(pdfUrl){
+    L.push(pdfUrl);
+    L.push('（' + (p.pdfName || '請求書') + '）');
+  } else {
+    L.push('未添付（スレッドに添付してください）');
+  }
+
+  if(note){
+    L.push('🗒 備考');
+    L.push(pvOneLine(note));
+  }
+
+  L.push(PV_SEP);
+  L.push('🚨【振込依頼の承認フロー】🚨');
+  L.push('① 第1段階　投稿内容と請求書の確認（小久保）');
+  L.push('投稿内容と添付資料を照合。');
+  L.push('🆗 内容に誤りがない場合は、投稿に :確認: スタンプ（または下の「確認OK」ボタン）。');
+  L.push('🆖 内容に誤りがある場合は、投稿者に差し戻し、修正のうえ再投稿を依頼。');
+  L.push('');
+  L.push('② 第2段階　振込の実行・振込明細の投稿（長谷川CEO）');
+  L.push(':確認: スタンプが付いたら、長谷川CEOが振込を実行。');
+  L.push('振込後は、依頼投稿のスレッドに振込明細（受付書）を添付して返信し、依頼投稿に 💰 スタンプ（または下の「振込完了」ボタン）。');
+  if(pvNeedsCeo(type)){
+    L.push('');
+    L.push('⚠️ この依頼は「' + type + '」のため、👑 代表 承認OK が付くまで「振込完了」にできません。');
+  }
+  L.push(PV_SEP);
+  return L.join('\n');
+}
+
 /* ======== 通信（GAS WebアプリをAPIとして使う） ======== */
 function readJson(r){
   if(!r.ok) throw new Error('サーバー応答 '+r.status);
   return r.json();
 }
-function gasCall(action, extra){
+function gasCall(action, extra, ctrl){
   var body = { action: action };
   if(extra){ for(var k in extra){ if(Object.prototype.hasOwnProperty.call(extra,k)) body[k]=extra[k]; } }
-  return fetch(GAS_URL, {
+  var opts = {
     method: 'POST',
     credentials: 'omit',
     headers: { 'Content-Type': 'text/plain;charset=utf-8' },
     body: JSON.stringify(body)
-  }).then(readJson);
+  };
+  /* 応答が返らないまま固まらないよう、呼び出し側から打ち切れるようにする */
+  if(ctrl && ctrl.signal) opts.signal = ctrl.signal;
+  return fetch(GAS_URL, opts).then(readJson);
 }
 /* 起動データ。GASの /exec はGETだとCORSヘッダーが付かず外部HTMLから読めないため、
    JSONのPOST（Content-Type: text/plain）で取る。?api=boot はGAS側にも残してある。 */
@@ -542,7 +774,10 @@ document.addEventListener('change', function(e){
   if(e.target && (e.target.type==='radio'||e.target.type==='checkbox')){
     markChoices(); syncMethod(); syncToyo(); checkDup(); syncReport();
   }
+  refreshPreviewIfShown();
 });
+/* 文字入力でも、表示中のプレビューは今の入力に合わせて作り直す */
+document.addEventListener('input', function(){ refreshPreviewIfShown(); });
 
 /* ======== 日付（曜日）表示 ======== */
 ['due','want'].forEach(function(id){
@@ -625,17 +860,57 @@ function checkDup(){
   }).catch(function(){});
 }
 
-/* ======== Slack文面プレビュー ======== */
+/* ======== Slack文面プレビュー ========
+   端末内で文面を作って必ず表示する（通信が返らなくても確認できる）。
+   サーバー（GAS）の文面は「照合」として取りに行き、返れば差し替える。 */
+var PREVIEW_TIMEOUT_MS = 7000;
+var previewSig = '';
+
+function previewSigOf(p){ try { return JSON.stringify(p); } catch(e){ return ''; } }
+function previewShown(){ var b=el('previewBox'); return !!b && b.style.display !== 'none'; }
+function setPreviewStatus(msg){ var s=el('previewStatus'); if(s) s.textContent = msg || ''; }
+
+function showPreviewLocal(p){
+  var box = el('previewBox');
+  previewSig = previewSigOf(p);
+  box.textContent = slackPreviewText(p);
+  box.style.display = 'block';
+}
+
+/* 入力が変わったら、表示中のプレビューを今の入力で作り直す（古い文面を残さない） */
+function refreshPreviewIfShown(){
+  if(!previewShown()) return;
+  showPreviewLocal(collectPayload());
+  setPreviewStatus('入力に合わせて作り直しました（サーバー確認は「確認する」で行えます）');
+}
+
 el('previewBtn').addEventListener('click', function(){
   var btn=this; btn.disabled=true;
-  var box=el('previewBox');
-  gasCall('previewSlack', { payload: collectPayload() }).then(function(res){
+  var payload = collectPayload();
+  showPreviewLocal(payload);            /* まず端末内の文面を即表示 */
+  setPreviewStatus('サーバーの文面と照合しています…');
+
+  var ctrl = (typeof AbortController !== 'undefined') ? new AbortController() : null;
+  var timer = setTimeout(function(){ if(ctrl){ try{ ctrl.abort(); }catch(e){} } }, PREVIEW_TIMEOUT_MS);
+
+  gasCall('previewSlack', { payload: payload }, ctrl).then(function(res){
+    clearTimeout(timer);
     btn.disabled=false;
-    box.style.display='block';
-    box.textContent = (res && res.text) ? res.text : 'プレビューを作れませんでした';
+    if(res && res.text && previewSigOf(collectPayload()) === previewSig){
+      el('previewBox').textContent = res.text;
+      setPreviewStatus('✔ サーバーの文面と一致しました（この文面でSlackに投稿されます）');
+    } else if(res && res.text){
+      setPreviewStatus('入力が変わったため、表示中の文面は最新の入力で作り直しています');
+    } else {
+      setPreviewStatus('端末内で作成した文面です（サーバーの文面は取得できませんでした）');
+    }
   }).catch(function(err){
-    btn.disabled=false; box.style.display='block';
-    box.textContent='プレビューを取得できませんでした（'+err.message+'）。電波の良い場所でもう一度お試しください。';
+    clearTimeout(timer);
+    btn.disabled=false;
+    var reason = (err && err.name === 'AbortError')
+      ? 'サーバーの応答がありませんでした'
+      : ('通信エラー：' + (err && err.message ? err.message : err));
+    setPreviewStatus('端末内で作成した文面です（' + reason + '）。入力内容から同じ形式で作成しています。');
   });
 });
 
